@@ -1,0 +1,11 @@
+/etc/inc/priv/adguardhome.priv.inc
+bin/AdGuardHome
+etc/rc.d/adguardhome
+pkg/adguardhome.inc
+pkg/adguardhome.xml
+%%DATADIR%%/info.xml
+www/shortcuts/pkg_adguardhome.inc
+www/status_adguardhome.php
+www/widgets/widgets/adguardhome.widget.php
+@dir /etc/inc/priv
+@dir /etc/inc

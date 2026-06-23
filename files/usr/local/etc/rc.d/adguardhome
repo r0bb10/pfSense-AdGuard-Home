@@ -1,0 +1,32 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2034,SC2086
+
+# PROVIDE: adguardhome
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="adguardhome"
+rcvar="adguardhome_enable"
+pidfile="/var/run/${name}.pid"
+procname="/usr/local/bin/AdGuardHome"
+command="/usr/sbin/daemon"
+start_precmd="adguardhome_precmd"
+
+load_rc_config "${name}"
+
+: "${adguardhome_enable:=NO}"
+: "${adguardhome_config:=/opt/AdGuardHome/AdGuardHome.yaml}"
+: "${adguardhome_workdir:=/opt/AdGuardHome}"
+: "${adguardhome_logfile:=/var/log/adguardhome.log}"
+
+adguardhome_args="-c ${adguardhome_config} -w ${adguardhome_workdir}"
+command_args="-S -p ${pidfile} -T ${name} -o ${adguardhome_logfile} -f ${procname} ${adguardhome_args}"
+
+adguardhome_precmd()
+{
+	install -d -m 0700 "${adguardhome_workdir}"
+}
+
+run_rc_command "$1"
