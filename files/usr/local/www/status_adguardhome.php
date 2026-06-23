@@ -2,10 +2,12 @@
 
 require_once('guiconfig.inc');
 require_once('service-utils.inc');
+require_once('util.inc');
 
 const ADGUARD_BIN = '/usr/local/bin/AdGuardHome';
 const ADGUARD_LOG = '/var/log/adguardhome.log';
 const ADGUARD_YAML = '/opt/AdGuardHome/AdGuardHome.yaml';
+const ADGUARD_WORKDIR = '/opt/AdGuardHome';
 
 function adguard_status_escape($value) {
 	return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -84,6 +86,21 @@ function adguard_read_log($lines = 30) {
 	return implode("\n", array_slice($file, -$lines));
 }
 
+function adguard_reset_setup() {
+	if (is_service_running('adguardhome')) {
+		stop_service('adguardhome');
+	}
+	mwexec('/bin/rm -rf ' . escapeshellarg(ADGUARD_WORKDIR));
+	mwexec('/usr/bin/install -d -m 0700 ' . escapeshellarg(ADGUARD_WORKDIR));
+	@unlink(ADGUARD_LOG);
+	start_service('adguardhome');
+}
+
+if (isset($_POST['resetadguardhome'])) {
+	adguard_reset_setup();
+	$savemsg = gettext('AdGuard Home setup has been reset and the service has been restarted.');
+}
+
 if (isset($_GET['ajax'])) {
 	header('Content-Type: application/json');
 	header('Cache-Control: no-store');
@@ -110,6 +127,9 @@ include('head.inc');
 <div class="panel panel-default">
 	<div class="panel-heading"><h2 class="panel-title"><?=gettext('Service')?></h2></div>
 	<div class="panel-body">
+		<?php if (!empty($savemsg)): ?>
+			<div class="alert alert-success" role="alert"><?=adguard_status_escape($savemsg)?></div>
+		<?php endif; ?>
 		<table class="table table-striped table-condensed">
 			<tbody>
 				<tr><th><?=gettext('State')?></th><td id="adguard-state">-</td></tr>
@@ -117,6 +137,11 @@ include('head.inc');
 				<tr><th><?=gettext('Admin UI')?></th><td><a id="adguard-admin-link" href="#" target="_blank"><?=gettext('Open AdGuard Home')?></a></td></tr>
 			</tbody>
 		</table>
+		<form method="post" onsubmit="return confirm(<?=json_encode(gettext('This will permanently delete all AdGuard Home configuration and data, then restart setup. Continue?'))?>);">
+			<button type="submit" name="resetadguardhome" value="1" class="btn btn-danger">
+				<?=gettext('Reset AdGuard Home Setup')?>
+			</button>
+		</form>
 	</div>
 </div>
 
