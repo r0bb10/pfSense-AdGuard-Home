@@ -66,7 +66,7 @@ abi: "${ABI}"
 desc: "AdGuard Home package for pfSense with WebGUI service integration and status visibility."
 www: "https://github.com/r0bb10/pfSense-pkg-adguardhome"
 licenselogic: "single"
-licenses: ["GPL3"]
+licenses: ["MIT"]
 categories: ["net"]
 scripts: {
   post-install: "${post_install_script}",
