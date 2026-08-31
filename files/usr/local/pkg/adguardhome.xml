@@ -3,7 +3,7 @@
 <?xml-stylesheet type="text/xsl" href="../xsl/package.xsl"?>
 <packagegui>
 	<name>adguardhome</name>
-	<version>%%PKGVERSION%%</version>
+	<version>stable</version>
 	<title>Services: AdGuard Home</title>
 	<addedit_string>AdGuard Home: changed settings</addedit_string>
 	<include_file>/usr/local/pkg/adguardhome.inc</include_file>

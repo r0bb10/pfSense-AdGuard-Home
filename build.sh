@@ -3,7 +3,7 @@
 set -eu
 
 PORTNAME="pfSense-pkg-adguardhome"
-PORTVERSION="${PORTVERSION:-0.0.0}"
+PORTVERSION="${PORTVERSION:-stable}"
 ABI="FreeBSD:15:amd64"
 PREFIX="/usr/local"
 ROOT=$(cd -- "$(dirname -- "$0")" && pwd)
@@ -49,12 +49,6 @@ stage() {
 	install -m 0644 "${FILES}${PREFIX}/share/${PORTNAME}/info.xml" "${STAGE}${PREFIX}/share/${PORTNAME}/info.xml"
 	install -m 0644 "${FILES}/etc/inc/priv/adguardhome.priv.inc" "${STAGE}/etc/inc/priv/adguardhome.priv.inc"
 
-	for file in \
-		"${STAGE}${PREFIX}/pkg/adguardhome.xml" \
-		"${STAGE}${PREFIX}/share/${PORTNAME}/info.xml"; do
-		sed "s/%%PKGVERSION%%/${PORTVERSION}/g" "${file}" > "${file}.tmp"
-		mv "${file}.tmp" "${file}"
-	done
 }
 
 manifest() {

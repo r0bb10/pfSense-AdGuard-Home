@@ -26,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
-      version: ${{ steps.resolve.outputs.version }}
       release_exists: ${{ steps.check.outputs.exists }}
     steps:
       - name: Resolve upstream release
@@ -46,12 +45,11 @@ jobs:
               tagName = data.tag_name;
             }
             core.setOutput('tag', tagName);
-            core.setOutput('version', tagName.replace(/^v/, ''));
       - name: Check existing package release
         id: check
         uses: actions/github-script@v8
         env:
-          RELEASE_TAG: pfsense-${{ steps.resolve.outputs.version }}
+          RELEASE_TAG: ${{ steps.resolve.outputs.tag }}
         with:
           script: |
             try {
@@ -75,7 +73,7 @@ jobs:
       - name: Build package on FreeBSD 15
         uses: vmactions/freebsd-vm@v1.4.8
         env:
-          PORTVERSION: ${{ needs.prepare.outputs.version }}
+          PORTVERSION: stable
         with:
           release: '15.0'
           usesh: true
@@ -90,27 +88,22 @@ jobs:
             chmod +x build.sh scripts/build-adguardhome-freebsd.sh
             ./scripts/build-adguardhome-freebsd.sh '${{ needs.prepare.outputs.tag }}'
             ./build.sh package
-            cp build/pkg/*.pkg ./pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}.pkg
-      - name: Generate checksums
-        run: sha256sum pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}.pkg > SHA256SUMS
+            cp build/pkg/*.pkg ./pfSense-pkg-adguardhome-stable.pkg
       - name: Attest package
         uses: actions/attest-build-provenance@v4.1.0
         with:
-          subject-path: pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}.pkg
+          subject-path: pfSense-pkg-adguardhome-stable.pkg
       - uses: actions/upload-artifact@v7.0.1
         with:
-          name: pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}
-          path: |
-            pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}.pkg
-            SHA256SUMS
+          name: pfSense-pkg-adguardhome-stable
+          path: pfSense-pkg-adguardhome-stable.pkg
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: pfsense-${{ needs.prepare.outputs.version }}
-          name: pfSense AdGuard Home ${{ needs.prepare.outputs.version }}
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.tag }}
           body: |
-            pfSense package for official AdGuard Home `${{ needs.prepare.outputs.tag }}` built for FreeBSD 15 amd64.
+            pfSense package with the official stable AdGuard Home `${{ needs.prepare.outputs.tag }}` bootstrap binary, built for FreeBSD 15 amd64.
           overwrite_files: true
           files: |
-            pfSense-pkg-adguardhome-${{ needs.prepare.outputs.version }}.pkg
-            SHA256SUMS
+            pfSense-pkg-adguardhome-stable.pkg
