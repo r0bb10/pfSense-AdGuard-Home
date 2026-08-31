@@ -1,8 +1,6 @@
 name: Track Upstream and Release
 
 on:
-  push:
-    branches: [main]
   schedule:
     - cron: '17 */12 * * *'
   workflow_dispatch:
@@ -13,6 +11,7 @@ on:
         type: string
 
 permissions:
+  actions: write
   contents: write
   id-token: write
   attestations: write
@@ -65,7 +64,7 @@ jobs:
             }
 
   build:
-    if: needs.prepare.outputs.release_exists == 'false' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: needs.prepare.outputs.release_exists == 'false' || github.event_name == 'workflow_dispatch'
     needs: prepare
     runs-on: ubuntu-latest
     steps:
@@ -107,3 +106,31 @@ jobs:
           overwrite_files: true
           files: |
             pfSense-pkg-adguardhome-stable.pkg
+
+  cleanup:
+    if: always() && needs.prepare.result == 'success'
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retain one previous run
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'release.yml',
+              status: 'completed',
+              per_page: 100
+            });
+            const previousRuns = runs
+              .filter((run) => run.id !== context.runId)
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            for (const run of previousRuns.slice(1)) {
+              await github.rest.actions.deleteWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id
+              });
+            }
